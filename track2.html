@@ -3,1001 +3,300 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EcoCompute AI - AI Data Center Power-Computing Co-Scheduler</title>
-    <!-- Tailwind CSS -->
+    <title>Data Center Power-Computing Co-Scheduler</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Chart.js -->
+    <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        slate: {
-                            50: '#f8fafc',
-                            100: '#f1f5f9',
-                            200: '#e2e8f0',
-                            300: '#cbd5e1',
-                            400: '#94a3b8',
-                            500: '#64748b',
-                            600: '#475569',
-                            700: '#334155',
-                            800: '#1e293b',
-                            900: '#0f172a',
-                        },
                         brand: {
-                            600: '#2563eb',
-                            700: '#1d4ed8',
-                            800: '#1e40af',
-                            900: '#1e3a8a',
+                            blue: '#1e3a8a',
+                            lightblue: '#2563eb',
+                            dark: '#0f172a',
+                            gray: '#64748b',
+                            lightbg: '#f8fafc',
+                            cardbg: '#ffffff',
+                            border: '#cbd5e1'
                         }
+                    },
+                    borderRadius: {
+                        'none': '0px',
+                        'DEFAULT': '0px',
+                        'md': '0px',
+                        'lg': '0px',
+                        'xl': '0px',
+                        'full': '0px'
                     }
                 }
             }
         }
     </script>
     <style>
-        /* Force sharp squared-off corners everywhere */
-        *, ::before, ::after {
+        * {
             border-radius: 0px !important;
         }
-
         body {
-            font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background-color: #f8fafc;
-            color: #1e293b;
+            background-color: #f1f5f9;
+            color: #0f172a;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
-
-        /* Minimalist scrollbar with sharp corners */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #f1f5f9;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #94a3b8;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #64748b;
-        }
-
-        .sharp-card {
-            background-color: #ffffff;
+        .section-box {
+            background: #ffffff;
             border: 1px solid #cbd5e1;
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
         }
-
-        .box-header-blue {
-            background-color: #1e3a8a; /* Slate dark blue */
+        .box-header {
+            background-color: #1e3a8a;
             color: #ffffff;
-            padding: 0.5rem 0.75rem;
-            border-bottom: 1px solid #1e40af;
+            padding: 8px 16px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            letter-spacing: 0.025em;
+            text-transform: uppercase;
+        }
+        .btn-primary {
+            background-color: #1e3a8a;
+            color: #ffffff;
+            border: 1px solid #1e3a8a;
+            padding: 8px 16px;
+            font-weight: 500;
+            transition: all 0.15s ease-in-out;
+        }
+        .btn-primary:hover {
+            background-color: #1d4ed8;
+            border-color: #1d4ed8;
+        }
+        .btn-secondary {
+            background-color: #ffffff;
+            color: #1e3a8a;
+            border: 1px solid #1e3a8a;
+            padding: 8px 16px;
+            font-weight: 500;
+            transition: all 0.15s ease-in-out;
+        }
+        .btn-secondary:hover {
+            background-color: #f1f5f9;
+        }
+        .custom-slider {
+            accent-color: #1e3a8a;
+        }
+        input, select {
+            border: 1px solid #cbd5e1 !important;
+            padding: 4px 8px;
+            background-color: #ffffff;
+        }
+        input:focus, select:focus {
+            outline: 2px solid #1e3a8a;
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between bg-slate-50 text-slate-800">
+<body class="min-h-screen pb-12">
 
-    <!-- Top Navigation Header -->
-    <header class="bg-white border-b border-slate-300 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="w-8 h-8 bg-blue-900 text-white flex items-center justify-center font-bold text-sm">
-                    <i class="fa-solid fa-server text-xs"></i>
-                </div>
-                <div>
-                    <h1 class="text-base font-bold text-slate-900 leading-tight">
-                        EcoCompute AI Simulator
-                    </h1>
-                    <p class="text-xs text-slate-500">Power-Computing Co-Scheduling Architecture (HackSHSID 2026 Track 2)</p>
-                </div>
-            </div>
-
-            <div class="flex items-center space-x-3">
-                <button id="openDocsBtn" class="px-3 py-1.5 text-xs text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 font-medium transition flex items-center space-x-1.5">
-                    <i class="fa-solid fa-book-open text-slate-500"></i>
-                    <span>Methodology & Technical Paper</span>
-                </button>
-                <button id="exportCsvBtn" class="px-3 py-1.5 text-xs text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 font-medium transition flex items-center space-x-1.5">
-                    <i class="fa-solid fa-file-csv text-emerald-600"></i>
-                    <span>Export CSV Data</span>
-                </button>
-                <button id="runSimBtn" class="px-3.5 py-1.5 text-xs text-white bg-blue-700 hover:bg-blue-800 font-medium transition flex items-center space-x-1.5 shadow-sm">
-                    <i class="fa-solid fa-play"></i>
-                    <span>Run Co-Optimization</span>
-                </button>
-            </div>
+    <!-- Top Header Navigation -->
+    <header class="bg-slate-900 text-white border-b-2 border-blue-900 px-6 py-4 flex flex-wrap justify-between items-center shadow-sm">
+        <div>
+            <h1 class="text-xl font-bold tracking-tight text-white">Data Center Power-Computing Co-Scheduler</h1>
+            <p class="text-xs text-slate-300 mt-0.5">HackSHSID 2026 Track 2 — Integrated Power & Compute Simulation Framework</p>
+        </div>
+        <div class="flex items-center gap-3 mt-3 sm:mt-0">
+            <button onclick="openMethodologyModal()" class="btn-secondary text-xs bg-slate-800 text-slate-100 border-slate-600 hover:bg-slate-700">
+                Methodology & Justifications
+            </button>
+            <button onclick="triggerOptimization()" class="btn-primary text-xs bg-blue-700 hover:bg-blue-600 border-blue-700">
+                Run Co-Scheduler Optimization
+            </button>
         </div>
     </header>
 
-    <!-- Main Container -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-grow space-y-6">
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 mt-6 space-y-6">
 
-        <!-- Metrics Overview / KPI Grid with Blue Title Headers -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            
-            <!-- Cost KPI Card -->
-            <div class="sharp-card">
-                <div class="box-header-blue flex justify-between items-center">
-                    <span class="text-xs font-bold uppercase tracking-wider">24h Operating Cost</span>
-                    <i class="fa-solid fa-dollar-sign text-blue-200 text-xs"></i>
+        <!-- Executive Metrics Overview Panel -->
+        <section class="section-box">
+            <div class="box-header flex justify-between items-center">
+                <span>Performance Comparison: Unscheduled Baseline vs. Co-Scheduler Optimization</span>
+                <span id="opt-mode-badge" class="text-xs font-normal bg-blue-900 px-2 py-0.5 border border-blue-400">Mode: Balanced Strategy</span>
+            </div>
+            <div class="p-4 grid grid-cols-2 md:grid-cols-4 gap-4 bg-white">
+                <!-- Operating Cost -->
+                <div class="border border-slate-200 p-3 bg-slate-50">
+                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Total Electricity Cost</span>
+                    <div class="mt-1 flex items-baseline justify-between">
+                        <span id="metric-cost-opt" class="text-xl font-bold text-slate-900">$0.00</span>
+                        <span class="text-xs text-slate-500">vs <span id="metric-cost-base" class="line-through">$0.00</span></span>
+                    </div>
+                    <div id="metric-cost-diff" class="text-xs font-semibold mt-1 text-emerald-700">Savings: -0.0%</div>
                 </div>
-                <div class="p-4 flex flex-col justify-between flex-grow">
-                    <div class="flex justify-between items-start">
-                        <h3 class="text-2xl font-bold text-slate-900" id="kpiCostOpt">$0</h3>
-                        <span class="text-xs font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 border border-emerald-300" id="kpiCostDiff">-0%</span>
+
+                <!-- Carbon Footprint -->
+                <div class="border border-slate-200 p-3 bg-slate-50">
+                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Carbon Emissions</span>
+                    <div class="mt-1 flex items-baseline justify-between">
+                        <span id="metric-carbon-opt" class="text-xl font-bold text-slate-900">0.0 kg</span>
+                        <span class="text-xs text-slate-500">vs <span id="metric-carbon-base" class="line-through">0.0 kg</span></span>
                     </div>
-                    <div class="mt-3 text-xs text-slate-500 flex justify-between border-t border-slate-200 pt-2">
-                        <span>Baseline Cost:</span>
-                        <span class="font-mono text-slate-700 font-medium" id="kpiCostBase">$0</span>
+                    <div id="metric-carbon-diff" class="text-xs font-semibold mt-1 text-emerald-700">Reduction: -0.0%</div>
+                </div>
+
+                <!-- Green Energy Utilization -->
+                <div class="border border-slate-200 p-3 bg-slate-50">
+                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Green Energy Self-Use</span>
+                    <div class="mt-1 flex items-baseline justify-between">
+                        <span id="metric-green-opt" class="text-xl font-bold text-slate-900">0.0%</span>
+                        <span class="text-xs text-slate-500">vs <span id="metric-green-base" class="line-through">0.0%</span></span>
                     </div>
+                    <div id="metric-green-diff" class="text-xs font-semibold mt-1 text-blue-700">Utilization Improvement</div>
+                </div>
+
+                <!-- Peak Grid Draw -->
+                <div class="border border-slate-200 p-3 bg-slate-50">
+                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Peak Grid Power Draw</span>
+                    <div class="mt-1 flex items-baseline justify-between">
+                        <span id="metric-peak-opt" class="text-xl font-bold text-slate-900">0.0 MW</span>
+                        <span class="text-xs text-slate-500">vs <span id="metric-peak-base" class="line-through">0.0 MW</span></span>
+                    </div>
+                    <div id="metric-peak-diff" class="text-xs font-semibold mt-1 text-emerald-700">Peak Reduction: 0.0 MW</div>
                 </div>
             </div>
+        </section>
 
-            <!-- Carbon KPI Card -->
-            <div class="sharp-card">
-                <div class="box-header-blue flex justify-between items-center">
-                    <span class="text-xs font-bold uppercase tracking-wider">Carbon Emissions</span>
-                    <i class="fa-solid fa-leaf text-blue-200 text-xs"></i>
-                </div>
-                <div class="p-4 flex flex-col justify-between flex-grow">
-                    <div class="flex justify-between items-start">
-                        <h3 class="text-2xl font-bold text-slate-900" id="kpiCarbonOpt">0 t CO₂</h3>
-                        <span class="text-xs font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 border border-emerald-300" id="kpiCarbonDiff">-0%</span>
+        <!-- Two-Column Layout for Controls & Simulation Configuration -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- Sidebar Controls -->
+            <div class="space-y-6 lg:col-span-1">
+                
+                <!-- Optimization Strategy Box -->
+                <div class="section-box">
+                    <div class="box-header">Optimization Objective</div>
+                    <div class="p-4 space-y-3 bg-white">
+                        <label class="block text-xs font-semibold text-slate-700">Optimization Goal</label>
+                        <select id="select-objective" class="w-full text-xs" onchange="triggerOptimization()">
+                            <option value="balanced">Balanced (Cost + Carbon Multi-Objective)</option>
+                            <option value="cost">Cost Minimization (TOU Arbitrage Focus)</option>
+                            <option value="carbon">Carbon Minimization (Green Matching Focus)</option>
+                        </select>
+                        <p class="text-xs text-slate-500 leading-relaxed">
+                            Defines the reward weighting function used by the scheduler to allocate batch training workloads and battery energy storage charging cycles.
+                        </p>
                     </div>
-                    <div class="mt-3 text-xs text-slate-500 flex justify-between border-t border-slate-200 pt-2">
-                        <span>Baseline Carbon:</span>
-                        <span class="font-mono text-slate-700 font-medium" id="kpiCarbonBase">0 t</span>
+                </div>
+
+                <!-- Energy Storage System (ESS) Parameters -->
+                <div class="section-box">
+                    <div class="box-header">Energy Storage System (ESS)</div>
+                    <div class="p-4 space-y-4 bg-white text-xs">
+                        <div>
+                            <div class="flex justify-between font-semibold text-slate-700 mb-1">
+                                <span>Battery Capacity (MWh)</span>
+                                <span id="val-ess-cap">30 MWh</span>
+                            </div>
+                            <input type="range" id="input-ess-cap" min="0" max="100" step="5" value="30" class="w-full custom-slider" oninput="updateSliders(); triggerOptimization()">
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between font-semibold text-slate-700 mb-1">
+                                <span>Max Charge/Discharge (MW)</span>
+                                <span id="val-ess-power">10 MW</span>
+                            </div>
+                            <input type="range" id="input-ess-power" min="0" max="30" step="2" value="10" class="w-full custom-slider" oninput="updateSliders(); triggerOptimization()">
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between font-semibold text-slate-700 mb-1">
+                                <span>Round-Trip Efficiency</span>
+                                <span id="val-ess-eff">90%</span>
+                            </div>
+                            <input type="range" id="input-ess-eff" min="70" max="98" step="1" value="90" class="w-full custom-slider" oninput="updateSliders(); triggerOptimization()">
+                        </div>
                     </div>
                 </div>
+
+                <!-- Renewable & Grid Environment -->
+                <div class="section-box">
+                    <div class="box-header">Power & Load Scenario</div>
+                    <div class="p-4 space-y-4 bg-white text-xs">
+                        <div>
+                            <div class="flex justify-between font-semibold text-slate-700 mb-1">
+                                <span>Peak Renewable Generation</span>
+                                <span id="val-green-peak">25 MW</span>
+                            </div>
+                            <input type="range" id="input-green-peak" min="0" max="60" step="5" value="25" class="w-full custom-slider" oninput="updateSliders(); triggerOptimization()">
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between font-semibold text-slate-700 mb-1">
+                                <span>Batch Training Load Volume</span>
+                                <span id="val-batch-vol">180 MWh</span>
+                            </div>
+                            <input type="range" id="input-batch-vol" min="50" max="400" step="10" value="180" class="w-full custom-slider" oninput="updateSliders(); triggerOptimization()">
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between font-semibold text-slate-700 mb-1">
+                                <span>Real-time Inference Load Volume</span>
+                                <span id="val-inf-vol">15 MW Peak</span>
+                            </div>
+                            <input type="range" id="input-inf-vol" min="5" max="30" step="1" value="15" class="w-full custom-slider" oninput="updateSliders(); triggerOptimization()">
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
-            <!-- Green Energy Self-Consumption KPI Card -->
-            <div class="sharp-card">
-                <div class="box-header-blue flex justify-between items-center">
-                    <span class="text-xs font-bold uppercase tracking-wider">Green Power Self-Consumption</span>
-                    <i class="fa-solid fa-solar-panel text-blue-200 text-xs"></i>
-                </div>
-                <div class="p-4 flex flex-col justify-between flex-grow">
-                    <div class="flex justify-between items-start">
-                        <h3 class="text-2xl font-bold text-slate-900" id="kpiGreenRatio">0%</h3>
-                        <span class="text-xs font-mono font-bold text-blue-800 bg-blue-50 px-2 py-0.5 border border-blue-200" id="kpiGreenDiff">+0%</span>
-                    </div>
-                    <div class="mt-3 text-xs text-slate-500 flex justify-between border-t border-slate-200 pt-2">
-                        <span>Baseline Utilization:</span>
-                        <span class="font-mono text-slate-700 font-medium" id="kpiGreenBaseline">0%</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Peak Tariff Hours Grid Drawn KPI Card -->
-            <div class="sharp-card">
-                <div class="box-header-blue flex justify-between items-center">
-                    <span class="text-xs font-bold uppercase tracking-wider">Peak Tariff Grid Load</span>
-                    <i class="fa-solid fa-bolt text-blue-200 text-xs"></i>
-                </div>
-                <div class="p-4 flex flex-col justify-between flex-grow">
-                    <div class="flex justify-between items-start">
-                        <h3 class="text-2xl font-bold text-slate-900" id="kpiPeakGridOpt">0 MWh</h3>
-                        <span class="text-xs font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 border border-emerald-300" id="kpiPeakDiff">-0%</span>
-                    </div>
-                    <div class="mt-3 text-xs text-slate-500 flex justify-between border-t border-slate-200 pt-2">
-                        <span>Inference SLA Violations:</span>
-                        <span class="font-mono text-slate-700 font-medium">0%</span>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
-        <!-- Main Layout: Sidebar Controls + Primary Dashboards -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-            <!-- Control Parameters Side Panel (4 cols) -->
-            <div class="lg:col-span-4 space-y-4">
-                <div class="sharp-card">
-                    <div class="box-header-blue flex justify-between items-center">
-                        <h2 class="text-xs font-bold uppercase tracking-wider flex items-center space-x-1.5">
-                            <i class="fa-solid fa-sliders text-blue-200"></i>
-                            <span>Simulation Parameters</span>
-                        </h2>
-                        <button id="resetDefaultsBtn" class="text-xs text-blue-200 hover:text-white transition underline font-normal">Reset</button>
-                    </div>
-
-                    <div class="p-4 space-y-4">
-                        <!-- Scheduler Strategy Selection -->
-                        <div class="space-y-1">
-                            <label class="block text-xs font-bold text-slate-700">Optimization Objective Function</label>
-                            <select id="simObjective" class="w-full bg-slate-50 border border-slate-300 text-xs p-2 text-slate-800 focus:outline-none focus:border-blue-600">
-                                <option value="balanced" selected>Balanced Cost & Carbon Trade-off</option>
-                                <option value="cost">Strict Cost Minimization (TOU Arbitrage)</option>
-                                <option value="carbon">Strict Carbon Footprint Minimization</option>
-                            </select>
-                        </div>
-
-                        <!-- Battery ESS Parameters -->
-                        <div class="bg-slate-50 p-3 border border-slate-300 space-y-2">
-                            <div class="flex justify-between text-xs font-bold text-slate-700">
-                                <span>Hithium ESS Storage Capacity</span>
-                                <span id="valEssCap" class="font-mono text-blue-700">100 MWh</span>
-                            </div>
-                            <input type="range" id="paramEssCap" min="0" max="300" step="10" value="100" class="w-full h-1.5 bg-slate-200 appearance-none cursor-pointer accent-blue-700">
-                            <div class="flex justify-between text-[11px] text-slate-500">
-                                <span>0 MWh</span>
-                                <span>Max Charge: <span id="valEssRate">25</span> MW</span>
-                                <span>300 MWh</span>
-                            </div>
-                        </div>
-
-                        <!-- Renewable Scaling -->
-                        <div class="bg-slate-50 p-3 border border-slate-300 space-y-2">
-                            <div class="flex justify-between text-xs font-bold text-slate-700">
-                                <span>Renewable Generation Peak</span>
-                                <span id="valGreenScale" class="font-mono text-blue-700">80 MW</span>
-                            </div>
-                            <input type="range" id="paramGreenScale" min="0" max="200" step="10" value="80" class="w-full h-1.5 bg-slate-200 appearance-none cursor-pointer accent-blue-700">
-                            <div class="flex justify-between text-[11px] text-slate-500">
-                                <span>0 MW</span>
-                                <span>100 MW</span>
-                                <span>200 MW</span>
-                            </div>
-                        </div>
-
-                        <!-- Workload Composition -->
-                        <div class="bg-slate-50 p-3 border border-slate-300 space-y-2">
-                            <div class="flex justify-between text-xs font-bold text-slate-700">
-                                <span>Batch Training Deferral Ratio</span>
-                                <span id="valFlexRatio" class="font-mono text-blue-700">60% Deferrable</span>
-                            </div>
-                            <input type="range" id="paramFlexRatio" min="10" max="90" step="5" value="60" class="w-full h-1.5 bg-slate-200 appearance-none cursor-pointer accent-blue-700">
-                            <div class="flex justify-between text-[11px] text-slate-500">
-                                <span>10% (Rigid)</span>
-                                <span>90% (Flexible)</span>
-                            </div>
-                        </div>
-
-                        <!-- Grid Peak-to-Off-Peak Price Ratio -->
-                        <div class="bg-slate-50 p-3 border border-slate-300 space-y-2">
-                            <div class="flex justify-between text-xs font-bold text-slate-700">
-                                <span>TOU Peak / Off-Peak Multiplier</span>
-                                <span id="valPriceRatio" class="font-mono text-blue-700">3.5x</span>
-                            </div>
-                            <input type="range" id="paramPriceRatio" min="1.5" max="6.0" step="0.5" value="3.5" class="w-full h-1.5 bg-slate-200 appearance-none cursor-pointer accent-blue-700">
-                            <div class="flex justify-between text-[11px] text-slate-500">
-                                <span>Off-peak: $45/MWh</span>
-                                <span>Peak: $157/MWh</span>
-                            </div>
-                        </div>
-
-                        <div class="pt-1">
-                            <button id="applySimBtn" class="w-full py-2 bg-blue-900 hover:bg-blue-800 text-xs font-bold text-white transition flex items-center justify-center space-x-2 border border-blue-900">
-                                <i class="fa-solid fa-rotate text-xs"></i>
-                                <span>Update Simulation Output</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Technical Architecture Reference Box -->
-                <div class="sharp-card">
-                    <div class="box-header-blue">
-                        <h3 class="font-bold text-xs uppercase tracking-wider">System Architecture Summary</h3>
-                    </div>
-                    <div class="p-4 space-y-2 text-xs text-slate-600 bg-white">
-                        <div class="flex items-start space-x-2">
-                            <span class="w-2 h-2 bg-blue-900 mt-1 shrink-0"></span>
-                            <p><strong class="text-slate-800">Inference Jobs:</strong> Non-deferrable real-time serving; executed instantly on arrival.</p>
-                        </div>
-                        <div class="flex items-start space-x-2">
-                            <span class="w-2 h-2 bg-blue-600 mt-1 shrink-0"></span>
-                            <p><strong class="text-slate-800">Batch Training:</strong> Delay-tolerant; shifted dynamically to cheap/green hours.</p>
-                        </div>
-                        <div class="flex items-start space-x-2">
-                            <span class="w-2 h-2 bg-emerald-600 mt-1 shrink-0"></span>
-                            <p><strong class="text-slate-800">Hithium ESS Buffer:</strong> Absorbs local solar surge and performs peak grid load shaving.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Visualization Charts Pane (8 cols) -->
-            <div class="lg:col-span-8 space-y-6">
-
-                <!-- Main Chart Box: Power Dispatch & Scheduling -->
-                <div class="sharp-card">
-                    <div class="box-header-blue flex justify-between items-center">
-                        <h2 class="text-xs font-bold uppercase tracking-wider flex items-center space-x-2">
-                            <i class="fa-solid fa-chart-area text-blue-200"></i>
-                            <span>24-Hour Co-Scheduler Power & Supply Dispatch (MW)</span>
-                        </h2>
-                        <span class="text-[11px] font-mono text-blue-100">1 Hour Granularity</span>
+            <!-- Visualization Charts Dashboard -->
+            <div class="space-y-6 lg:col-span-2">
+                
+                <!-- Power Dispatch Mix Chart -->
+                <div class="section-box">
+                    <div class="box-header flex justify-between items-center">
+                        <span>24-Hour Co-Scheduled Power Dispatch Profile (MW)</span>
+                        <span class="text-xs font-normal text-slate-200">Optimized Co-Scheduler Output</span>
                     </div>
                     <div class="p-4 bg-white">
-                        <div class="h-64 relative w-full">
-                            <canvas id="dispatchChart"></canvas>
+                        <div class="h-64">
+                            <canvas id="chart-power-dispatch"></canvas>
                         </div>
                     </div>
                 </div>
 
-                <!-- Secondary Charts Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                    <!-- Workload Rescheduling Comparison Box -->
-                    <div class="sharp-card">
-                        <div class="box-header-blue flex justify-between items-center">
-                            <h3 class="text-xs font-bold uppercase tracking-wider flex items-center space-x-1.5">
-                                <i class="fa-solid fa-microchip text-blue-200"></i>
-                                <span>Workload Execution Profile</span>
-                            </h3>
-                            <span class="text-[11px] text-blue-100">MW Power</span>
-                        </div>
-                        <div class="p-4 bg-white">
-                            <div class="h-52 relative w-full">
-                                <canvas id="workloadChart"></canvas>
-                            </div>
+                <!-- Compute Workload & Queue Scheduling -->
+                <div class="section-box">
+                    <div class="box-header flex justify-between items-center">
+                        <span>Compute Workload Distribution & Shiftable Task Queue (MW)</span>
+                        <span class="text-xs font-normal text-slate-200">Batch Job Deferral Logic</span>
+                    </div>
+                    <div class="p-4 bg-white">
+                        <div class="h-60">
+                            <canvas id="chart-compute-load"></canvas>
                         </div>
                     </div>
-
-                    <!-- ESS Battery State of Charge Box -->
-                    <div class="sharp-card">
-                        <div class="box-header-blue flex justify-between items-center">
-                            <h3 class="text-xs font-bold uppercase tracking-wider flex items-center space-x-1.5">
-                                <i class="fa-solid fa-battery-three-quarters text-blue-200"></i>
-                                <span>Battery ESS State of Charge</span>
-                            </h3>
-                            <span class="text-[11px] text-blue-100 font-mono" id="socCurrentVal">Peak: 95%</span>
-                        </div>
-                        <div class="p-4 bg-white">
-                            <div class="h-52 relative w-full">
-                                <canvas id="batteryChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-
                 </div>
 
-                <!-- Evaluation Breakdown Table Box -->
-                <div class="sharp-card">
-                    <div class="box-header-blue flex justify-between items-center">
-                        <h3 class="text-xs font-bold uppercase tracking-wider">
-                            Baseline vs. AI Co-Scheduler Performance Breakdown
-                        </h3>
-                        <span class="text-[11px] text-blue-100 font-mono">24h Quantitative Evaluation</span>
+                <!-- Energy Storage System (ESS) Battery State of Charge -->
+                <div class="section-box">
+                    <div class="box-header flex justify-between items-center">
+                        <span>Battery Energy Storage System (ESS) State of Charge (SOC %)</span>
+                        <span class="text-xs font-normal text-slate-200">Arbitrage & Clean Power Buffer</span>
                     </div>
-                    <div class="p-0 bg-white overflow-x-auto">
-                        <table class="w-full text-xs text-left text-slate-700 border-collapse">
-                            <thead>
-                                <tr class="bg-slate-100 border-b border-slate-300 text-slate-800 font-bold uppercase text-[11px]">
-                                    <th class="py-2.5 px-4">Performance Metric</th>
-                                    <th class="py-2.5 px-4">Baseline (Unscheduled)</th>
-                                    <th class="py-2.5 px-4 text-blue-800">AI Co-Scheduler</th>
-                                    <th class="py-2.5 px-4 text-right">Delta Improvement</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-200 font-mono">
-                                <tr class="hover:bg-slate-50">
-                                    <td class="py-2.5 px-4 font-sans font-semibold text-slate-900">Total Electricity Cost ($)</td>
-                                    <td class="py-2.5 px-4 text-slate-600" id="tblCostBase">$0</td>
-                                    <td class="py-2.5 px-4 text-blue-800 font-bold" id="tblCostOpt">$0</td>
-                                    <td class="py-2.5 px-4 text-right text-emerald-700 font-bold" id="tblCostSavings">-0%</td>
-                                </tr>
-                                <tr class="hover:bg-slate-50">
-                                    <td class="py-2.5 px-4 font-sans font-semibold text-slate-900">Carbon Emissions (t CO₂)</td>
-                                    <td class="py-2.5 px-4 text-slate-600" id="tblCarbonBase">0 t</td>
-                                    <td class="py-2.5 px-4 text-blue-800 font-bold" id="tblCarbonOpt">0 t</td>
-                                    <td class="py-2.5 px-4 text-right text-emerald-700 font-bold" id="tblCarbonSavings">-0%</td>
-                                </tr>
-                                <tr class="hover:bg-slate-50">
-                                    <td class="py-2.5 px-4 font-sans font-semibold text-slate-900">Green Power Self-Consumption (%)</td>
-                                    <td class="py-2.5 px-4 text-slate-600" id="tblGreenBase">0%</td>
-                                    <td class="py-2.5 px-4 text-blue-800 font-bold" id="tblGreenOpt">0%</td>
-                                    <td class="py-2.5 px-4 text-right text-blue-800 font-bold" id="tblGreenDiff">+0%</td>
-                                </tr>
-                                <tr class="hover:bg-slate-50">
-                                    <td class="py-2.5 px-4 font-sans font-semibold text-slate-900">Peak Tariff Hours Grid Load (MWh)</td>
-                                    <td class="py-2.5 px-4 text-slate-600" id="tblPeakGridBase">0 MWh</td>
-                                    <td class="py-2.5 px-4 text-blue-800 font-bold" id="tblPeakGridOpt">0 MWh</td>
-                                    <td class="py-2.5 px-4 text-right text-emerald-700 font-bold" id="tblPeakGridDiff">-0%</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <div class="p-4 bg-white">
+                        <div class="h-48">
+                            <canvas id="chart-battery-soc"></canvas>
+                        </div>
                     </div>
                 </div>
 
             </div>
         </div>
 
-    </main>
-
-    <!-- Academic Footer -->
-    <footer class="border-t border-slate-300 bg-white py-4 mt-8 text-xs text-slate-600">
-        <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center space-y-2 md:space-y-0">
-            <div>
-                <span class="font-bold text-slate-800">HackSHSID 2026 Track 2 Competition Prototype</span>
+        <!-- Comparative hourly table breakdown -->
+        <section class="section-box">
+            <div class="box-header flex justify-between items-center">
+                <span>Hourly Simulation Telemetry Log</span>
+                <button onclick="exportCSV()" class="text-xs font-normal underline hover:text-slate-200">Export CSV Data</button>
             </div>
-            <div>
-                <span>Joint Multi-Objective Optimization Model (Power-Grid-Workload Co-Scheduler)</span>
-            </div>
-        </div>
-    </footer>
-
-    <!-- Technical Documentation & Methodology Modal -->
-    <div id="docsModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-3xl max-h-[90vh] border border-slate-400 shadow-2xl flex flex-col overflow-hidden">
-            <!-- Blue Modal Header -->
-            <div class="box-header-blue flex justify-between items-center">
-                <div class="flex items-center space-x-2">
-                    <i class="fa-solid fa-file-lines text-blue-200"></i>
-                    <h2 class="text-sm font-bold">Technical Methodology & Architecture (HackSHSID 2026)</h2>
-                </div>
-                <button id="closeDocsBtn" class="p-1 text-blue-200 hover:text-white">
-                    <i class="fa-solid fa-xmark text-base"></i>
-                </button>
-            </div>
-
-            <!-- Modal Content (Scrollable Text) -->
-            <div class="p-6 overflow-y-auto space-y-6 text-xs text-slate-700 leading-relaxed font-sans bg-white">
-                <!-- Section 1 -->
-                <section class="space-y-2">
-                    <h3 class="text-sm font-bold text-slate-900 border-b border-slate-300 pb-1">1. Mathematical Optimization Objective Formulation</h3>
-                    <p>We formulate the data center co-scheduling problem as a dynamic multi-objective linear program over a discretized 24-hour horizon ($T = 24$):</p>
-                    <div class="bg-slate-100 p-3 font-mono text-slate-900 border border-slate-300">
-                        Minimize J = w_cost * sum(P_grid(t) * C_tou(t)) + w_carbon * sum(P_grid(t) * I_grid(t))
-                    </div>
-                    <ul class="list-disc pl-5 space-y-1 text-slate-600">
-                        <li><strong>$P_{\text{grid}}(t)$:</strong> Grid electricity power draw at hour $t$ (MW).</li>
-                        <li><strong>$C_{\text{TOU}}(t)$:</strong> Time-of-Use electricity price tariff ($/MWh).</li>
-                        <li><strong>$I_{\text{grid}}(t)$:</strong> Grid carbon intensity factor (kg CO₂ / MWh).</li>
-                        <li><strong>Weights ($w_{\text{cost}}, w_{\text{carbon}}$):</strong> Defined dynamically according to the selected priority policy.</li>
-                    </ul>
-                </section>
-
-                <!-- Section 2 -->
-                <section class="space-y-2">
-                    <h3 class="text-sm font-bold text-slate-900 border-b border-slate-300 pb-1">2. Physical Energy Conservation & Hithium ESS Constraints</h3>
-                    <p>At every discrete time step $t$, physical power balance conservation is strictly maintained:</p>
-                    <div class="bg-slate-100 p-3 font-mono text-slate-900 border border-slate-300">
-                        P_workload(t) = P_green_direct(t) + P_grid(t) + P_ess_discharge(t) * eta_dis - P_ess_charge(t)
-                    </div>
-                    <p>Hithium ESS battery state of charge (SOC) dynamics:</p>
-                    <div class="bg-slate-100 p-3 font-mono text-slate-900 border border-slate-300">
-                        SOC(t+1) = SOC(t) + [ P_ess_charge(t) * eta_ch - P_ess_discharge(t) / eta_dis ]
-                    </div>
-                </section>
-
-                <!-- Section 3 -->
-                <section class="space-y-2">
-                    <h3 class="text-sm font-bold text-slate-900 border-b border-slate-300 pb-1">3. Workload Classification & Latency SLA Protection</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div class="bg-slate-50 p-3 border border-slate-300">
-                            <h4 class="font-bold text-slate-900 mb-1">Non-Deferrable Real-Time Inference</h4>
-                            <p class="text-slate-600">Strict SLA deadline requirements. Assigned immediate execution priority upon arrival with zero deferral window.</p>
-                        </div>
-                        <div class="bg-slate-50 p-3 border border-slate-300">
-                            <h4 class="font-bold text-slate-900 mb-1">Flexible Batch Model Training</h4>
-                            <p class="text-slate-600">Delay-tolerant deep learning training jobs. Queued & shifted to off-peak tariff hours or peak local solar output window.</p>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Section 4 -->
-                <section class="space-y-2">
-                    <h3 class="text-sm font-bold text-slate-900 border-b border-slate-300 pb-1">4. AI Disclosure & Compliance Statement</h3>
-                    <p class="text-slate-600">
-                        Generative AI assistance was strictly limited to UI component styling and standard Chart.js canvas boilerplate setup. All algorithm design, physical power balance equations, battery efficiency equations, and scheduling models were independently authored and validated by the team.
-                    </p>
-                </section>
-            </div>
-
-            <!-- Modal Footer -->
-            <div class="p-3 border-t border-slate-300 bg-slate-100 flex justify-end space-x-2">
-                <button id="copyDocsText" class="px-3 py-1.5 bg-white hover:bg-slate-200 text-xs text-slate-800 border border-slate-300 font-bold transition">
-                    <i class="fa-solid fa-copy mr-1"></i> Copy Abstract
-                </button>
-                <button id="closeDocsBtn2" class="px-3.5 py-1.5 bg-blue-900 hover:bg-blue-800 text-xs text-white font-bold transition">
-                    Close Document
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Message Toast -->
-    <div id="toast" class="fixed bottom-4 right-4 bg-slate-900 text-white text-xs px-4 py-2 hidden z-50 border border-slate-700 shadow-lg">
-        <span id="toastMsg">Notification</span>
-    </div>
-
-    <!-- Application Script Logic -->
-    <script>
-        // --- DATA & MODEL SIMULATION STATE ---
-        const HOURS = Array.from({length: 24}, (_, i) => `${String(i).padStart(2, '0')}:00`);
-
-        // Default Synthetic Data Profiles (24 hours)
-        const BASE_DATA = {
-            greenPower: [0, 0, 0, 0, 5, 20, 45, 65, 80, 85, 90, 85, 75, 60, 40, 25, 10, 5, 0, 0, 0, 0, 0, 0],
-            inferenceLoad: [20, 18, 15, 15, 18, 25, 35, 45, 50, 52, 50, 48, 52, 55, 50, 48, 45, 40, 35, 30, 28, 25, 22, 20],
-            trainingLoad: [40, 40, 45, 45, 40, 35, 30, 25, 20, 20, 20, 25, 30, 30, 35, 40, 45, 50, 50, 45, 40, 40, 40, 40],
-            basePrice: [45, 45, 45, 45, 45, 60, 90, 120, 150, 160, 140, 120, 110, 120, 140, 160, 175, 170, 150, 110, 80, 60, 50, 45],
-            carbonIntensity: [350, 340, 340, 350, 380, 450, 520, 580, 600, 590, 550, 500, 480, 510, 560, 610, 630, 620, 570, 500, 440, 400, 370, 360]
-        };
-
-        // Global Chart References
-        let dispatchChartInstance = null;
-        let workloadChartInstance = null;
-        let batteryChartInstance = null;
-
-        let latestBaselineData = null;
-        let latestOptimizedData = null;
-
-        // Initialize Simulation Logic on Window Load
-        window.onload = function() {
-            setupEventListeners();
-            runSimulation();
-        };
-
-        function showToast(msg) {
-            const toast = document.getElementById('toast');
-            document.getElementById('toastMsg').innerText = msg;
-            toast.classList.remove('hidden');
-            setTimeout(() => {
-                toast.classList.add('hidden');
-            }, 2500);
-        }
-
-        function setupEventListeners() {
-            // Slider binding labels
-            document.getElementById('paramEssCap').addEventListener('input', (e) => {
-                document.getElementById('valEssCap').innerText = `${e.target.value} MWh`;
-                document.getElementById('valEssRate').innerText = Math.round(e.target.value * 0.25);
-            });
-            document.getElementById('paramGreenScale').addEventListener('input', (e) => {
-                document.getElementById('valGreenScale').innerText = `${e.target.value} MW`;
-            });
-            document.getElementById('paramFlexRatio').addEventListener('input', (e) => {
-                document.getElementById('valFlexRatio').innerText = `${e.target.value}% Deferrable`;
-            });
-            document.getElementById('paramPriceRatio').addEventListener('input', (e) => {
-                document.getElementById('valPriceRatio').innerText = `${parseFloat(e.target.value).toFixed(1)}x`;
-            });
-
-            // Action Buttons
-            document.getElementById('applySimBtn').addEventListener('click', runSimulation);
-            document.getElementById('runSimBtn').addEventListener('click', runSimulation);
-            document.getElementById('resetDefaultsBtn').addEventListener('click', resetDefaults);
-            document.getElementById('exportCsvBtn').addEventListener('click', exportCSV);
-
-            // Modal Controls
-            const docsModal = document.getElementById('docsModal');
-            document.getElementById('openDocsBtn').addEventListener('click', () => docsModal.classList.remove('hidden'));
-            document.getElementById('closeDocsBtn').addEventListener('click', () => docsModal.classList.add('hidden'));
-            document.getElementById('closeDocsBtn2').addEventListener('click', () => docsModal.classList.add('hidden'));
-
-            document.getElementById('copyDocsText').addEventListener('click', () => {
-                const text = "HackSHSID 2026 Track 2 Solution Methodology: Dynamic Co-Scheduling of AI workloads with Hithium ESS battery buffer and TOU grid pricing.";
-                document.execCommand('copy');
-                showToast("Methodology abstract copied to clipboard.");
-            });
-        }
-
-        function resetDefaults() {
-            document.getElementById('paramEssCap').value = 100;
-            document.getElementById('valEssCap').innerText = "100 MWh";
-            document.getElementById('valEssRate').innerText = "25";
-
-            document.getElementById('paramGreenScale').value = 80;
-            document.getElementById('valGreenScale').innerText = "80 MW";
-
-            document.getElementById('paramFlexRatio').value = 60;
-            document.getElementById('valFlexRatio').innerText = "60% Deferrable";
-
-            document.getElementById('paramPriceRatio').value = 3.5;
-            document.getElementById('valPriceRatio').innerText = "3.5x";
-
-            document.getElementById('simObjective').value = "balanced";
-
-            runSimulation();
-            showToast("Parameters reset to default values.");
-        }
-
-        // --- CORE SIMULATION ENGINE ---
-        function runSimulation() {
-            // Get Slider Parameters
-            const essCap = parseFloat(document.getElementById('paramEssCap').value);
-            const maxEssPower = essCap * 0.25;
-            const greenScale = parseFloat(document.getElementById('paramGreenScale').value);
-            const flexRatio = parseFloat(document.getElementById('paramFlexRatio').value) / 100.0;
-            const priceRatio = parseFloat(document.getElementById('paramPriceRatio').value);
-            const objective = document.getElementById('simObjective').value;
-
-            // Scaled Curves
-            const scaledGreen = BASE_DATA.greenPower.map(v => (v / 90.0) * greenScale);
-            const scaledPrice = BASE_DATA.basePrice.map(v => {
-                const minP = 45;
-                return minP + (v - minP) * (priceRatio / 3.5);
-            });
-
-            // 1. CALCULATE UNSCHEDULED BASELINE
-            const baseline = simulateBaseline(scaledGreen, scaledPrice);
-
-            // 2. CALCULATE AI CO-SCHEDULER OPTIMIZATION
-            const optimized = simulateCoScheduler(scaledGreen, scaledPrice, essCap, maxEssPower, flexRatio, objective);
-
-            latestBaselineData = baseline;
-            latestOptimizedData = optimized;
-
-            // 3. UPDATE DOM UI
-            updateUIResults(baseline, optimized);
-
-            // 4. RENDER CHARTS
-            renderCharts(scaledGreen, scaledPrice, baseline, optimized);
-        }
-
-        function simulateBaseline(greenPower, gridPrice) {
-            let totalCost = 0;
-            let totalCarbon = 0;
-            let greenConsumed = 0;
-            let totalGreenAvail = 0;
-            let peakGridDrawn = 0;
-
-            const gridDrawnArr = [];
-            const execWorkloadArr = [];
-
-            for (let t = 0; t < 24; t++) {
-                const totalDemand = BASE_DATA.inferenceLoad[t] + BASE_DATA.trainingLoad[t];
-                execWorkloadArr.push(totalDemand);
-
-                const greenAvail = greenPower[t];
-                totalGreenAvail += greenAvail;
-
-                const directGreen = Math.min(totalDemand, greenAvail);
-                greenConsumed += directGreen;
-
-                const gridNeeded = totalDemand - directGreen;
-                gridDrawnArr.push(gridNeeded);
-
-                totalCost += gridNeeded * gridPrice[t];
-                totalCarbon += (gridNeeded * BASE_DATA.carbonIntensity[t]) / 1000.0;
-
-                if (gridPrice[t] >= 120) {
-                    peakGridDrawn += gridNeeded;
-                }
-            }
-
-            return {
-                totalCost,
-                totalCarbon,
-                greenUtilRate: totalGreenAvail > 0 ? (greenConsumed / totalGreenAvail) * 100 : 0,
-                peakGridDrawn,
-                gridDrawnArr,
-                execWorkloadArr
-            };
-        }
-
-        function simulateCoScheduler(greenPower, gridPrice, essCap, maxEssRate, flexRatio, objective) {
-            const infLoad = BASE_DATA.inferenceLoad;
-            const trainLoad = BASE_DATA.trainingLoad;
-
-            const scheduledTrainLoad = new Array(24).fill(0);
-            const gridDrawnArr = new Array(24).fill(0);
-            const greenDirectArr = new Array(24).fill(0);
-            const essChargeArr = new Array(24).fill(0);
-            const essDischargeArr = new Array(24).fill(0);
-            const essSocArr = new Array(24).fill(0);
-
-            let poolFlexibleEnergy = 0;
-            for (let t = 0; t < 24; t++) {
-                const fixedTrain = trainLoad[t] * (1 - flexRatio);
-                const flexTrain = trainLoad[t] * flexRatio;
-                scheduledTrainLoad[t] += fixedTrain;
-                poolFlexibleEnergy += flexTrain;
-            }
-
-            let costWeight = 1.0;
-            let carbonWeight = 0.5;
-            if (objective === 'cost') { costWeight = 2.0; carbonWeight = 0.1; }
-            if (objective === 'carbon') { costWeight = 0.2; carbonWeight = 2.5; }
-
-            const hourScores = Array.from({length: 24}, (_, t) => ({
-                hour: t,
-                score: (gridPrice[t] * costWeight) + (BASE_DATA.carbonIntensity[t] * carbonWeight) - (greenPower[t] * 1.5)
-            })).sort((a, b) => a.score - b.score);
-
-            const maxGpuCapacity = 110;
-            let remainingPool = poolFlexibleEnergy;
-
-            for (const item of hourScores) {
-                const t = item.hour;
-                const currentFixed = infLoad[t] + scheduledTrainLoad[t];
-                const availableCap = Math.max(0, maxGpuCapacity - currentFixed);
-                const alloc = Math.min(remainingPool, availableCap);
-
-                scheduledTrainLoad[t] += alloc;
-                remainingPool -= alloc;
-
-                if (remainingPool <= 0) break;
-            }
-
-            let currentSoc = essCap * 0.3;
-            const eta = 0.94;
-
-            let totalCost = 0;
-            let totalCarbon = 0;
-            let greenConsumed = 0;
-            let totalGreenAvail = 0;
-            let peakGridDrawn = 0;
-
-            for (let t = 0; t < 24; t++) {
-                const totalWorkload = infLoad[t] + scheduledTrainLoad[t];
-                let greenLeft = greenPower[t];
-                totalGreenAvail += greenLeft;
-
-                const directGreen = Math.min(totalWorkload, greenLeft);
-                greenDirectArr[t] = directGreen;
-                greenConsumed += directGreen;
-                greenLeft -= directGreen;
-
-                let netDemand = totalWorkload - directGreen;
-
-                const isPeak = gridPrice[t] >= 120;
-                const isOffPeak = gridPrice[t] <= 60;
-
-                let chargePower = 0;
-                let dischargePower = 0;
-
-                if (greenLeft > 0 && currentSoc < essCap) {
-                    chargePower = Math.min(greenLeft, maxEssRate, (essCap - currentSoc) / eta);
-                    currentSoc += chargePower * eta;
-                    greenConsumed += chargePower;
-                } else if (isOffPeak && currentSoc < essCap * 0.85) {
-                    chargePower = Math.min(maxEssRate, (essCap * 0.85 - currentSoc) / eta);
-                    currentSoc += chargePower * eta;
-                    netDemand += chargePower;
-                } else if (isPeak && netDemand > 0 && currentSoc > essCap * 0.15) {
-                    dischargePower = Math.min(netDemand, maxEssRate, (currentSoc - essCap * 0.15) * eta);
-                    currentSoc -= dischargePower / eta;
-                    netDemand -= dischargePower;
-                }
-
-                essChargeArr[t] = chargePower;
-                essDischargeArr[t] = dischargePower;
-                essSocArr[t] = currentSoc;
-
-                const gridDrawn = Math.max(0, netDemand);
-                gridDrawnArr[t] = gridDrawn;
-
-                totalCost += gridDrawn * gridPrice[t];
-                totalCarbon += (gridDrawn * BASE_DATA.carbonIntensity[t]) / 1000.0;
-
-                if (isPeak) {
-                    peakGridDrawn += gridDrawn;
-                }
-            }
-
-            const totalExecWorkload = infLoad.map((v, i) => v + scheduledTrainLoad[i]);
-
-            return {
-                totalCost,
-                totalCarbon,
-                greenUtilRate: totalGreenAvail > 0 ? Math.min(100, (greenConsumed / totalGreenAvail) * 100) : 0,
-                peakGridDrawn,
-                gridDrawnArr,
-                greenDirectArr,
-                essChargeArr,
-                essDischargeArr,
-                essSocArr,
-                totalExecWorkload,
-                shiftedEnergy: poolFlexibleEnergy
-            };
-        }
-
-        // --- UPDATE DOM UI ---
-        function updateUIResults(base, opt) {
-            const costSavingsPct = ((base.totalCost - opt.totalCost) / base.totalCost) * 100;
-            const carbonSavingsPct = ((base.totalCarbon - opt.totalCarbon) / base.totalCarbon) * 100;
-
-            // KPI Cards
-            document.getElementById('kpiCostOpt').innerText = `$${Math.round(opt.totalCost).toLocaleString()}`;
-            document.getElementById('kpiCostBase').innerText = `$${Math.round(base.totalCost).toLocaleString()}`;
-            document.getElementById('kpiCostDiff').innerText = `-${costSavingsPct.toFixed(1)}%`;
-
-            document.getElementById('kpiCarbonOpt').innerText = `${opt.totalCarbon.toFixed(1)} t`;
-            document.getElementById('kpiCarbonBase').innerText = `${base.totalCarbon.toFixed(1)} t`;
-            document.getElementById('kpiCarbonDiff').innerText = `-${carbonSavingsPct.toFixed(1)}%`;
-
-            document.getElementById('kpiGreenRatio').innerText = `${opt.greenUtilRate.toFixed(1)}%`;
-            document.getElementById('kpiGreenBaseline').innerText = `${base.greenUtilRate.toFixed(1)}%`;
-            document.getElementById('kpiGreenDiff').innerText = `+${(opt.greenUtilRate - base.greenUtilRate).toFixed(1)}%`;
-
-            document.getElementById('kpiPeakGridOpt').innerText = `${Math.round(opt.peakGridDrawn)} MWh`;
-            const peakDiff = ((base.peakGridDrawn - opt.peakGridDrawn) / base.peakGridDrawn) * 100;
-            document.getElementById('kpiPeakDiff').innerText = `-${peakDiff.toFixed(1)}%`;
-
-            const maxSoc = Math.max(...opt.essSocArr);
-            const cap = parseFloat(document.getElementById('paramEssCap').value);
-            const socPct = cap > 0 ? Math.round((maxSoc / cap) * 100) : 0;
-            document.getElementById('socCurrentVal').innerText = `Peak: ${socPct}% (${Math.round(maxSoc)} MWh)`;
-
-            // Table Breakdown
-            document.getElementById('tblCostBase').innerText = `$${Math.round(base.totalCost).toLocaleString()}`;
-            document.getElementById('tblCostOpt').innerText = `$${Math.round(opt.totalCost).toLocaleString()}`;
-            document.getElementById('tblCostSavings').innerText = `-${costSavingsPct.toFixed(1)}%`;
-
-            document.getElementById('tblCarbonBase').innerText = `${base.totalCarbon.toFixed(1)} t`;
-            document.getElementById('tblCarbonOpt').innerText = `${opt.totalCarbon.toFixed(1)} t`;
-            document.getElementById('tblCarbonSavings').innerText = `-${carbonSavingsPct.toFixed(1)}%`;
-
-            document.getElementById('tblGreenBase').innerText = `${base.greenUtilRate.toFixed(1)}%`;
-            document.getElementById('tblGreenOpt').innerText = `${opt.greenUtilRate.toFixed(1)}%`;
-            document.getElementById('tblGreenDiff').innerText = `+${(opt.greenUtilRate - base.greenUtilRate).toFixed(1)}%`;
-
-            document.getElementById('tblPeakGridBase').innerText = `${Math.round(base.peakGridDrawn)} MWh`;
-            document.getElementById('tblPeakGridOpt').innerText = `${Math.round(opt.peakGridDrawn)} MWh`;
-            document.getElementById('tblPeakGridDiff').innerText = `-${peakDiff.toFixed(1)}%`;
-        }
-
-        // --- RENDER CLEAN ACADEMIC CHARTS ---
-        function renderCharts(greenPower, gridPrice, baseline, optimized) {
-            if (dispatchChartInstance) dispatchChartInstance.destroy();
-            if (workloadChartInstance) workloadChartInstance.destroy();
-            if (batteryChartInstance) batteryChartInstance.destroy();
-
-            // 1. Dispatch Breakdown Chart
-            const ctxDispatch = document.getElementById('dispatchChart').getContext('2d');
-            dispatchChartInstance = new Chart(ctxDispatch, {
-                type: 'bar',
-                data: {
-                    labels: HOURS,
-                    datasets: [
-                        {
-                            label: 'Direct Renewable Power (MW)',
-                            data: optimized.greenDirectArr,
-                            backgroundColor: '#059669', // Emerald
-                            stack: 'supply'
-                        },
-                        {
-                            label: 'ESS Battery Discharge (MW)',
-                            data: optimized.essDischargeArr,
-                            backgroundColor: '#d97706', // Amber
-                            stack: 'supply'
-                        },
-                        {
-                            label: 'Grid Drawn Power (MW)',
-                            data: optimized.gridDrawnArr,
-                            backgroundColor: '#2563eb', // Blue
-                            stack: 'supply'
-                        },
-                        {
-                            label: 'TOU Tariff ($/MWh)',
-                            data: gridPrice,
-                            type: 'line',
-                            borderColor: '#475569',
-                            borderWidth: 1.5,
-                            borderDash: [3, 3],
-                            yAxisID: 'yPrice',
-                            pointRadius: 0
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: { stacked: true, grid: { color: '#e2e8f0' }, ticks: { color: '#475569', font: { size: 10 } } },
-                        y: { stacked: true, grid: { color: '#e2e8f0' }, ticks: { color: '#475569', font: { size: 10 } } },
-                        yPrice: { position: 'right', grid: { drawOnChartArea: false }, ticks: { color: '#475569', font: { size: 10 } } }
-                    },
-                    plugins: {
-                        legend: { labels: { color: '#1e293b', font: { size: 11, weight: '600' }, boxWidth: 12 } }
-                    }
-                }
-            });
-
-            // 2. Workload Profile Chart
-            const ctxWorkload = document.getElementById('workloadChart').getContext('2d');
-            workloadChartInstance = new Chart(ctxWorkload, {
-                type: 'line',
-                data: {
-                    labels: HOURS,
-                    datasets: [
-                        {
-                            label: 'Baseline Unscheduled Demand',
-                            data: baseline.execWorkloadArr,
-                            borderColor: '#94a3b8',
-                            borderDash: [4, 4],
-                            borderWidth: 1.5,
-                            pointRadius: 0,
-                            fill: false
-                        },
-                        {
-                            label: 'Co-Scheduled Executed Workload',
-                            data: optimized.totalExecWorkload,
-                            borderColor: '#1d4ed8',
-                            backgroundColor: 'rgba(29, 78, 216, 0.08)',
-                            borderWidth: 2,
-                            fill: true,
-                            tension: 0.1,
-                            pointRadius: 0
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: { grid: { color: '#f1f5f9' }, ticks: { color: '#475569', font: { size: 9 } } },
-                        y: { grid: { color: '#f1f5f9' }, ticks: { color: '#475569', font: { size: 9 } } }
-                    },
-                    plugins: {
-                        legend: { labels: { color: '#1e293b', font: { size: 10, weight: '600' }, boxWidth: 10 } }
-                    }
-                }
-            });
-
-            // 3. ESS Battery State of Charge Chart
-            const ctxBattery = document.getElementById('batteryChart').getContext('2d');
-            batteryChartInstance = new Chart(ctxBattery, {
-                type: 'line',
-                data: {
-                    labels: HOURS,
-                    datasets: [
-                        {
-                            label: 'ESS Stored Energy (MWh)',
-                            data: optimized.essSocArr,
-                            borderColor: '#b45309',
-                            backgroundColor: 'rgba(180, 83, 9, 0.08)',
-                            borderWidth: 1.5,
-                            fill: true,
-                            tension: 0.1,
-                            pointRadius: 0
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: { grid: { color: '#f1f5f9' }, ticks: { color: '#475569', font: { size: 9 } } },
-                        y: { grid: { color: '#f1f5f9' }, ticks: { color: '#475569', font: { size: 9 } } }
-                    },
-                    plugins: {
-                        legend: { labels: { color: '#1e293b', font: { size: 10, weight: '600' }, boxWidth: 10 } }
-                    }
-                }
-            });
-        }
-
-        // Export Results to CSV
-        function exportCSV() {
-            if (!latestBaselineData || !latestOptimizedData) return;
-
-            let csvContent = "data:text/csv;charset=utf-8,Hour,Direct_Renewable_MW,ESS_Discharge_MW,Grid_Drawn_MW,CoScheduled_Workload_MW,ESS_SOC_MWh\n";
-
-            for (let i = 0; i < 24; i++) {
-                const row = [
-                    HOURS[i],
-                    latestOptimizedData.greenDirectArr[i].toFixed(2),
-                    latestOptimizedData.essDischargeArr[i].toFixed(2),
-                    latestOptimizedData.gridDrawnArr[i].toFixed(2),
-                    latestOptimizedData.totalExecWorkload[i].toFixed(2),
-                    latestOptimizedData.essSocArr[i].toFixed(2)
-                ].join(",");
-                csvContent += row + "\n";
-            }
-
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "EcoCompute_CoScheduler_Simulation_Results.csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            showToast("Simulation data exported to CSV file.");
-        }
-    </script>
-</body>
-</html>
+            <div class="p-4 bg-white overflow-x-auto">
+                <table class="w-full text
